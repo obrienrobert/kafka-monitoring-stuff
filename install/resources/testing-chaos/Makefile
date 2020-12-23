@@ -125,7 +125,7 @@ test/critical-alerts:
 .PHONY: uninstall/operator/chaosscheduler
 uninstall/operator/chaosscheduler:
 	@echo "removing chaosscheduler resources"
-	@oc oc delete crd chaosschedules.litmuschaos.io
+	@oc delete crd chaosschedules.litmuschaos.io
 	@oc delete deployment chaos-scheduler -n litmus
 	@oc delete sa scheduler -n litmus
 	@oc delete clusterrole scheduler
