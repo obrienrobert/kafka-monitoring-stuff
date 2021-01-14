@@ -16,6 +16,8 @@ toc::[]
 
 == Description
 
+NOTE: This SOP has been automated and no longer required. See https://issues.redhat.com/browse/MGDSTRM-955 for more info. It may be removed in future.
+
 The purpose of this SOP is config an alternative `storageclass` for Managed Kafka that disables encryption.  This works around a AWS bug affecting
 the provisioning of encrypted volumes.  
 
