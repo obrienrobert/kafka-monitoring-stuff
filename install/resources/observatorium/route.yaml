@@ -4,7 +4,7 @@ metadata:
   name: observatorium
   namespace: <namespace>
 spec:
-  host: observatorium-observatorium.apps-crc.testing
+  host: <hosturl>
   to:
     kind: Service
     name: observatorium-xyz-observatorium-api

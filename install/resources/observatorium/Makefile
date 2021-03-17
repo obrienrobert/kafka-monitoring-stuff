@@ -1,5 +1,8 @@
+export OBSERVATORIUM_APPS_URL := $(shell oc get --namespace openshift-ingress-operator ingresscontrollers/default --output jsonpath='{.status.domain}{"\n"}')
 export DEX_TOKEN_URL := http://dex-dex.$(OBSERVATORIUM_APPS_URL)
-export GATEWAY_URL := https://observatorium-observatorium.$(OBSERVATORIUM_APPS_URL)
+export OBSERVATORIUM_ROUTE_HOST ?=observatorium-observatorium.$(OBSERVATORIUM_APPS_URL)
+export GATEWAY_URL := https://$(OBSERVATORIUM_ROUTE_HOST)
+
 export LOG_SCRAPE_NAMESPACES ?= '$(STRIMZI_OPERATOR_NAMESPACE)','$(KAFKA_CLUSTER_NAMESPACE)'
 export METRICS_SCRAPE_NAMESPACES ?= '$(STRIMZI_OPERATOR_NAMESPACE)','$(KAFKA_CLUSTER_NAMESPACE)'
 
@@ -33,8 +36,8 @@ create/cr:
 
 .PHONY: create/route
 create/route:
-	@echo "create route"
-	@sed 's/<namespace>/$(OBSERVATORIUM_NAMESPACE)/g' ./route.yaml | cat | oc apply -f -
+	@echo "create route $(OBSERVATORIUM_ROUTE_HOST) in $(OBSERVATORIUM_NAMESPACE) namespace"
+	@sed 's/<namespace>/$(OBSERVATORIUM_NAMESPACE)/g;s/<hosturl>/$(OBSERVATORIUM_ROUTE_HOST)/g' ./route.yaml | cat | oc apply -f -
 
 setup:
 	@echo "updating promtail config to point to $(GATEWAY_URL)"
