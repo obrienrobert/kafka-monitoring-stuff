@@ -131,6 +131,10 @@ uninstall/monitoring/global:
 install/observatorium:
 	make -C resources/observatorium all
 
+.PHONY: install/observatorium-multitenant
+install/observatorium-multitenant:
+	make -C resources/observatorium all-multitenant
+
 .PHONY: uninstall/observatorium
 uninstall/observatorium:
 	make -C resources/observatorium clean
