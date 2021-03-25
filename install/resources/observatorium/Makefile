@@ -34,6 +34,17 @@ create/cr:
 	@echo "create observatorium in: $(OBSERVATORIUM_NAMESPACE)"
 	@sed 's/<namespace>/$(OBSERVATORIUM_NAMESPACE)/g' ./observatorium.yaml | cat | oc apply -f -
 
+.PHONY: create/cr-multitenant
+create/cr-multitenant:
+	@echo "create multitenant observatorium in: $(OBSERVATORIUM_NAMESPACE)"
+	@sed 's/<namespace>/$(OBSERVATORIUM_NAMESPACE)/g' ./observatorium-multitenant.yaml | cat | oc apply -f -
+
+.PHONY: create/dex-multitenant-secret
+create/dex-multitenant-secret:
+	@echo "Updating dex config secret in:  $(DEX_NAMESPACE) for multitenancy"
+	oc delete secret dex -n $(DEX_NAMESPACE);oc create secret generic dex --from-file=config.yaml=./config-multitenant.yaml -n $(DEX_NAMESPACE) --dry-run -o yaml|oc apply -f -
+	oc delete pod -l app.kubernetes.io/name=dex -n $(DEX_NAMESPACE)
+
 .PHONY: create/route
 create/route:
 	@echo "create route $(OBSERVATORIUM_ROUTE_HOST) in $(OBSERVATORIUM_NAMESPACE) namespace"
@@ -72,4 +83,7 @@ clean:
 	@echo "Done uninstalling observatorium"
 
 all: create/dex create/minio create/crds create/operator create/cr create/route
+	@echo "Done installing observatorium"
+
+all-multitenant: create/dex create/minio create/crds create/operator create/cr create/cr-multitenant create/dex-multitenant-secret create/route
 	@echo "Done installing observatorium"
