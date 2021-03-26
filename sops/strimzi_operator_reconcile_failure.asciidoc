@@ -1,0 +1,63 @@
+// begin header
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
+:numbered:
+:toc: macro
+:toc-title: pass:[<b>Table of Contents</b>]
+// end header
+= Strimzi Operator Kafka Resource Reconcile Failure
+
+toc::[]
+
+== Description
+This SOP outlines the process of how to investigate and resolve a `StrimziOperatorReconcileFailure` alert.
+
+There are two versions of this alert: one warning and one critical. The alert expression for each is the same, with the only difference being the thresholds in each expression:
+[source,sh]
+----
+Warning = 25% or more of Kafka resources are failing to reconcile
+
+Critical = 50% or more of Kafka resources are failing to reconcile
+----
+The metric used in the alert provides a count of _all_ Kafka CR's that are failing to reconcile instead of giving the details of a _specific_ Kafka CR, which is why the alert is threshold-based.
+
+== Alert Breakdown
+The critical version of the alert is broken down below to make it easier to understand:
+
+[source,sh]
+----
+increase(strimzi_reconciliations_failed_total{kind="Kafka"}[10m:2m]) / 5 >= round(strimzi_resources{kind="Kafka"} / 2)
+----
+1. The count of the total number of Kafka reconciliation failures is taken every 2 minutes over 10 minutes (`[10m:2m]`)
+2. This number is then divided by 5, as reconciliation occurs every 2 minutes (`10m period / 2m reconcile = 5`)
+3. The resulting value is compared against the total number of Kafka clusters divided by 2 (`50%` of Kafka clusters), with the alert firing if the value is equal or greater than `50%` of total Kafka clusters. The number of Kafka clusters is rounded, as we cannot have half a cluster (e.g. `7 clusters / 2 = 3.5`, when rounded this becomes `4`)
+
+== Prerequisites
+1. Access to the OSD cluster from which the alert was received
+
+== Execute/Resolution
+1. The Strimzi Operator logs can be used to determine which Kafka instances are failing to reconcile. Navigate to the namespace in which the Strimzi Operator resides, then to the `strimzi-cluster-operator` pod, and click logs
+2. Resolving the alert is depends on fixing the underlying reason why the Kafka resources are failing to reconcile. Using the search term `Failed to reconcile`, search the logs for errors that indicate the operator was unable to reconcile. The cause of the reconciliation failure will be displayed in the exception linked to the reconciliation failure. The `Known Reconciliation Failures Causes` section below lists known causes
+
+== Known Reconciliation Failures Causes
+=== Invalid Custom Resource Spec
+If a spec on a Kafka CR is changed to an invalid value, reconciliation will fail with the following log message:
+[source,sh]
+----
+io.strimzi.operator.cluster.model.InvalidResourceException: Kafka kafka/test-cluster has invalid spec.kafka.config: <message indicating which field is invalid>
+----
+This can be fixed by changing the specified field in all affected CRs to a valid value. A list of valid values can be retrieved from the `kafkas.kafka.strimzi.io` CRD using the command below and searching for the invalid field:
+[source,sh]
+----
+oc get crd kafkas.kafka.strimzi.io -o yaml
+----
+== Validate
+1. Ensure the alert clears once a fix has been applied
+
+== Troubleshooting
+None.
